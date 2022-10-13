@@ -29,8 +29,36 @@ class User {
     )
   }
 
-  write(message) {
+  writeWithPrompt(message) {
     this.connection.write(message + `\n${this.username || 'guest'}>`)
+  }
+
+  write(message) {
+    this.connection.write(message)
+  }
+}
+
+class Tile {
+  x
+  y
+  type
+  constructor(x, y, type) {
+    this.x = x
+    this.y = y
+    this.type = type
+  }
+}
+
+class Map {
+  tiles = []
+  constructor(sizeX, sizeY) {
+    for (let x = 0; x < sizeX; x++) {
+      let column = []
+      for (let y = 0; y < sizeY; y++) {
+        column.push(new Tile(x, y, 'grass'))
+      }
+      this.tiles.push(column)
+    }
   }
 }
 
@@ -41,7 +69,7 @@ function serverListener(connection) {
   refreshServerScreen()
   console.log(chalk.green('connected'))
 
-  user.write(chalk.green('Welcome to the server!'))
+  user.writeWithPrompt(chalk.green('Welcome to the server!'))
 
   connection.on('data', function (data) {
     console.log(chalk.blue('data: ' + data))
@@ -71,17 +99,17 @@ function handleUserInput(user, userInput) {
       break
 
     case 'clear':
-      user.connection.write('\n'.repeat(40))
+      user.write('\n'.repeat(40))
       break
 
     case 'ping':
-      user.connection.write(chalk.blue('pong'))
+      user.write(chalk.blue('pong'))
       break
 
     case 'users':
-      user.connection.write(chalk.cyan('Connected users:\n'))
+      user.write(chalk.cyan('Connected users:\n'))
       database.connectedUsers.forEach((databaseUser) => {
-        user.connection.write(`${databaseUser.username || 'Guest'}` + '\n')
+        user.write(`${databaseUser.username || 'Guest'}` + '\n')
       })
       break
 
@@ -99,19 +127,19 @@ function handleUserInput(user, userInput) {
           break
 
         default:
-          user.connection.write(chalk.red('Invalid command'))
+          user.write(chalk.red('Invalid command'))
           break
       }
       break
 
     case 'register':
       if (user.isGuest) {
-        user.connection.write(chalk.red('You must set a username first'))
+        user.write(chalk.red('You must set a username first'))
         break
       }
 
       if (user.password === null) {
-        user.connection.write(chalk.red('You must set a password first'))
+        user.write(chalk.red('You must set a password first'))
         break
       }
 
@@ -120,7 +148,7 @@ function handleUserInput(user, userInput) {
           (databaseUser) => databaseUser.username === user.username
         )
       ) {
-        user.connection.write(chalk.red('Username already taken'))
+        user.write(chalk.red('Username already taken'))
         break
       }
 
@@ -131,12 +159,12 @@ function handleUserInput(user, userInput) {
 
       database.save()
 
-      user.connection.write(chalk.green('User registered'))
+      user.write(chalk.green('User registered'))
       break
 
     case 'login':
       if (userInput.length < 3) {
-        user.connection.write(chalk.red('Invalid command'))
+        user.write(chalk.red('Invalid parameters:\nlogin username password'))
         break
       }
 
@@ -155,7 +183,7 @@ function handleUserInput(user, userInput) {
         user.password = userToLogin.password
         user.isGuest = false
       } else {
-        user.connection.write(chalk.red('Invalid username or password'))
+        user.write(chalk.red('Invalid username or password'))
       }
       break
 
@@ -168,15 +196,15 @@ function handleUserInput(user, userInput) {
       if (destination) {
         user.whisper(destination, message)
       } else {
-        user.connection.write(chalk.red('User not found'))
+        user.write(chalk.red('User not found'))
       }
       break
 
     default:
-      user.connection.write(chalk.red('command not found: ') + userInput[0])
+      user.write(chalk.red('Command not found: ') + userInput[0])
       break
   }
-  user.write('')
+  user.writeWithPrompt('')
 }
 
 function refreshServerScreen() {
@@ -184,6 +212,7 @@ function refreshServerScreen() {
   console.log(chalk.green(`Server running on port ${port}`))
   console.log(chalk.green('Connected users: ' + database.connectedUsers.length))
   console.table(database.connectedUsers, ['id', 'username', 'isGuest'])
+  console.table(database.map.tiles)
 }
 
 const port = process.env.PORT || 8080
@@ -196,7 +225,14 @@ if (!fs.existsSync(databaseFolder)) {
 let database = {
   connectedUsers: [],
   users: [],
+  map: [],
   load() {
+    try {
+      database.map = require(databaseFolder + '/map.json')
+    } catch (error) {
+      console.log(chalk.red('Map not found'))
+      database.map = new Map(10, 10)
+    }
     try {
       database.users = require(databaseFolder + '/users.json')
     } catch (error) {
@@ -208,6 +244,10 @@ let database = {
       fs.writeFileSync(
         databaseFolder + '/users.json',
         JSON.stringify(database.users)
+      )
+      fs.writeFileSync(
+        databaseFolder + '/map.json',
+        JSON.stringify(database.map)
       )
     } catch (error) {
       console.error(chalk.red('Could not save users database'))
