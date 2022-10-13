@@ -1,6 +1,7 @@
 const net = require('node:net')
 const chalk = require('chalk')
 const crypto = require('node:crypto')
+const fs = require('fs')
 require('dotenv').config()
 
 class User {
@@ -187,18 +188,30 @@ function refreshServerScreen() {
 
 const port = process.env.PORT || 8080
 
+const databaseFolder = './database'
+if (!fs.existsSync(databaseFolder)) {
+  fs.mkdirSync(databaseFolder)
+}
+
 let database = {
   connectedUsers: [],
   users: [],
   load() {
     try {
-      database.users = require('./users.json')
+      database.users = require(databaseFolder + '/users.json')
     } catch (error) {
-      console.log(chalk.red('Users database not found'))
+      console.error(chalk.red('Users database not found'))
     }
   },
   save() {
-    require('fs').writeFileSync('users.json', JSON.stringify(database.users))
+    try {
+      fs.writeFileSync(
+        databaseFolder + '/users.json',
+        JSON.stringify(database.users)
+      )
+    } catch (error) {
+      console.error(chalk.red('Could not save users database'))
+    }
   },
 }
 
