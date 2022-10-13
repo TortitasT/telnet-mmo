@@ -9,6 +9,7 @@
   "author": "Victor Garcia Fernandez",
   "license": "MIT",
   "dependencies": {
-    "chalk": "^4.1.2"
+    "chalk": "^4.1.2",
+    "dotenv": "^16.0.3"
   }
 }
