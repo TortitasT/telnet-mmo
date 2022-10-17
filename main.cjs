@@ -215,6 +215,13 @@ function refreshServerScreen() {
   console.table(database.map.tiles)
 }
 
+function writeMapIntoJson(map){
+  const json = JSON.stringify(map)
+  fs.writeFile('mapDump.json', json, 'utf8', function (err) {
+    console.log('The file was saved!');
+  });
+}
+
 const port = process.env.PORT || 8080
 
 const databaseFolder = './database'
@@ -261,3 +268,4 @@ const server = net.createServer(serverListener)
 server.listen(port)
 
 refreshServerScreen()
+
