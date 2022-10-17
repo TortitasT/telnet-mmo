@@ -6,6 +6,7 @@ class User {
   isGuest
   username
   password
+  position = { x: 0, y: 0, z: 0 }
 
   constructor(connection) {
     this.connection = connection
@@ -19,6 +20,11 @@ class User {
 
   whisper(destination, message) {
     destination.write(
+      chalk.yellowBright(
+        `\n[WHISPER] ${this.username} -> ${destination.username}: ${message}\n`
+      )
+    )
+    this.connection.write(
       chalk.yellowBright(
         `\n[WHISPER] ${this.username} -> ${destination.username}: ${message}\n`
       )

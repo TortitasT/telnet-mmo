@@ -1,10 +1,11 @@
 {
   "name": "node-telnet-server",
   "version": "1.0.0",
-  "description": "A telnet server template.",
+  "description": "An mmorpg telnet server",
   "main": "main.cjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.cjs"
   },
   "author": "Victor Garcia Fernandez",
   "license": "MIT",
