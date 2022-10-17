@@ -10,10 +10,12 @@ class Tile {
   x
   y
   type
+  actorId
   constructor(x, y, type) {
     this.x = x
     this.y = y
     this.type = type
+    this.actorId = null
   }
 }
 
@@ -27,6 +29,16 @@ class Map {
       }
       this.tiles.push(column)
     }
+  }
+
+  getTile({ x, y, z }) {
+    if (this.tiles[x] && this.tiles[x][y]) {
+      return this.tiles[x][y]
+    }
+    return null
+  }
+  setActorId({ x, y, z }, actorId) {
+    this.tiles[x][y].actorId = actorId
   }
 }
 
@@ -72,6 +84,93 @@ function handleUserInput(user, userInput) {
 
     case 'ping':
       user.write(chalk.blue('pong'))
+      break
+
+    case 'spawn':
+      user.spawn()
+      break
+
+    case 'move':
+      const direction = userInput[1]
+
+      let desiredPosition = user.position
+
+      switch (direction) {
+        case 'up':
+          desiredPosition.y++
+          if (
+            database.map.getTile(desiredPosition) === null ||
+            database.map.getTile(desiredPosition).actorId !== null
+          ) {
+            user.write(chalk.red('You cannot move there!'))
+            desiredPosition = user.position
+          }
+          break
+        case 'down':
+          desiredPosition.y--
+          if (
+            database.map.getTile(desiredPosition) === null ||
+            database.map.getTile(desiredPosition).actorId !== null
+          ) {
+            user.write(chalk.red('You cannot move there!'))
+            desiredPosition = user.position
+          }
+          break
+        case 'left':
+          desiredPosition.x--
+          if (
+            database.map.getTile(desiredPosition) === null ||
+            database.map.getTile(desiredPosition).actorId !== null
+          ) {
+            user.write(chalk.red('You cannot move there!'))
+            desiredPosition = user.position
+          }
+          break
+        case 'right':
+          desiredPosition.x++
+          if (
+            database.map.getTile(desiredPosition) === null ||
+            database.map.getTile(desiredPosition).actorId !== null
+          ) {
+            user.write(chalk.red('You cannot move there!'))
+            desiredPosition = user.position
+          }
+          break
+      }
+
+      database.map.setActorId(user.position, null)
+      database.map.setActorId(desiredPosition, user.id)
+
+      user.position = desiredPosition
+      user.write(chalk.green('You moved to ' + user.position))
+
+      break
+
+    case 'coordinates':
+      if (!user.position) {
+        user.write(chalk.red('You are not spawned yet!'))
+        break
+      }
+
+      user.writeWithPrompt(
+        chalk.blue(`x: ${user.position.x} y: ${user.position.y}`)
+      )
+      break
+
+    case 'map':
+      let map = ''
+      for (let y = 0; y < database.map.tiles[0].length; y++) {
+        for (let x = 0; x < database.map.tiles.length; x++) {
+          const tile = database.map.getTile({ x, y, z: 0 })
+          if (tile.actorId === null) {
+            map += chalk.green(tile.type[0])
+          } else {
+            map += chalk.red('X')
+          }
+        }
+        map += '\n'
+      }
+      user.writeWithPrompt(map)
       break
 
     case 'users':
@@ -183,11 +282,11 @@ function refreshServerScreen() {
   console.table(database.map.tiles)
 }
 
-function writeMapIntoJson(map){
+function writeMapIntoJson(map) {
   const json = JSON.stringify(map)
   fs.writeFile('mapDump.json', json, 'utf8', function (err) {
-    console.log('The file was saved!');
-  });
+    console.log('The file was saved!')
+  })
 }
 
 const port = process.env.PORT || 8080
@@ -236,4 +335,3 @@ const server = net.createServer(serverListener)
 server.listen(port)
 
 refreshServerScreen()
-
