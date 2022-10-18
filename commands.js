@@ -1,4 +1,5 @@
 const chalk = require('chalk')
+const crypto = require('node:crypto')
 
 const Database = require('./database.js')
 
