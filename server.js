@@ -1,6 +1,7 @@
 const net = require('node:net')
 const chalk = require('chalk')
 
+const toLog = require('./log.js')
 const User = require('./user.js')
 const Database = require('./database.js')
 const Config = require('./config.js')
@@ -12,6 +13,7 @@ function serverListener(connection) {
 
   AdminDisplay.ShowMessage('Connected')
   AdminDisplay.refreshServerScreen()
+  toLog('Connected user: ' + user.id + ' from ' + user.connection.remoteAddress)
 
   user.writeWithPrompt(chalk.green('Welcome to the server!'))
 
@@ -29,10 +31,13 @@ function serverListener(connection) {
   })
 
   connection.on('close', function () {
-    Database.connectedUsers.splice(Database.connectedUsers.indexOf(user), 1)
-
     AdminDisplay.ShowMessage(chalk.red('Disconnected'))
     AdminDisplay.refreshServerScreen()
+    toLog(
+      'Disconnected user: ' + user.id + ' from ' + user.connection.remoteAddress
+    )
+
+    Database.connectedUsers.splice(Database.connectedUsers.indexOf(user), 1)
   })
 }
 

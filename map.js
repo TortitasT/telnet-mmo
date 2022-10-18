@@ -3,7 +3,13 @@ const chalk = require('chalk')
 class Map {
   tiles = []
 
-  constructor(sizeX, sizeY) {
+  constructor(map) {
+    if (map) {
+      this.tiles = map.tiles
+    }
+  }
+
+  generate(sizeX, sizeY) {
     for (let x = 0; x < sizeX; x++) {
       let column = []
       for (let y = 0; y < sizeY; y++) {
@@ -11,6 +17,7 @@ class Map {
       }
       this.tiles.push(column)
     }
+    return this
   }
 
   getTile({ x, y, z }) {
@@ -31,6 +38,11 @@ class Map {
   }
 
   spawnUser(user) {
+    if (user.hasSpawned()) {
+      this.setActorId(user.position, user.id)
+      return
+    }
+
     user.position = { x: 0, y: 0, z: 0 }
     while (this.getTile(user.position).actorId !== null) {
       user.position = {

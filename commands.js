@@ -20,6 +20,7 @@ function handleUserInput(user, userInput) {
 
     case 'spawn':
       Database.map.spawnUser(user)
+      user.write(chalk.blue('You have spawned'))
       break
 
     case 'move':
@@ -34,7 +35,7 @@ function handleUserInput(user, userInput) {
 
       switch (direction) {
         case 'up':
-          desiredPosition.y++
+          desiredPosition.y--
           if (
             Database.map.getTile(desiredPosition) === null ||
             Database.map.getTile(desiredPosition).actorId !== null
@@ -44,7 +45,7 @@ function handleUserInput(user, userInput) {
           }
           break
         case 'down':
-          desiredPosition.y--
+          desiredPosition.y++
           if (
             Database.map.getTile(desiredPosition) === null ||
             Database.map.getTile(desiredPosition).actorId !== null
@@ -158,12 +159,7 @@ function handleUserInput(user, userInput) {
         break
       }
 
-      Database.users.push({
-        username: user.username,
-        password: user.password,
-      })
-
-      Database.save()
+      Database.saveUser(user)
 
       user.write(chalk.green('User registered'))
       break
@@ -185,12 +181,19 @@ function handleUserInput(user, userInput) {
       )
 
       if (userToLogin) {
+        user.id = userToLogin.id
         user.username = userToLogin.username
         user.password = userToLogin.password
         user.isGuest = false
+        user.position = userToLogin.position
       } else {
         user.write(chalk.red('Invalid username or password'))
       }
+      break
+
+    case 'save':
+      Database.saveUser(user)
+      user.write(chalk.green('Saved'))
       break
 
     case 'whisper':
