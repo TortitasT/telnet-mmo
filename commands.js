@@ -1,9 +1,6 @@
 const chalk = require('chalk')
 
-const User = require('./user.js')
 const Database = require('./database.js')
-const Config = require('./config.js')
-const AdminDisplay = require('./adminDisplay.js')
 
 function handleUserInput(user, userInput) {
   switch (userInput[0]) {
@@ -25,9 +22,14 @@ function handleUserInput(user, userInput) {
       break
 
     case 'move':
+      if (!user.hasSpawned()) {
+        user.write(chalk.red('You must spawn first'))
+        break
+      }
+
       const direction = userInput[1]
 
-      let desiredPosition = {...user.position}
+      let desiredPosition = { ...user.position }
 
       switch (direction) {
         case 'up':
@@ -37,7 +39,7 @@ function handleUserInput(user, userInput) {
             Database.map.getTile(desiredPosition).actorId !== null
           ) {
             user.write(chalk.red('You cannot move there!'))
-            desiredPosition = user.position
+            desiredPosition = null
           }
           break
         case 'down':
@@ -47,7 +49,7 @@ function handleUserInput(user, userInput) {
             Database.map.getTile(desiredPosition).actorId !== null
           ) {
             user.write(chalk.red('You cannot move there!'))
-            desiredPosition = user.position
+            desiredPosition = null
           }
           break
         case 'left':
@@ -57,7 +59,7 @@ function handleUserInput(user, userInput) {
             Database.map.getTile(desiredPosition).actorId !== null
           ) {
             user.write(chalk.red('You cannot move there!'))
-            desiredPosition = user.position
+            desiredPosition = null
           }
           break
         case 'right':
@@ -67,20 +69,25 @@ function handleUserInput(user, userInput) {
             Database.map.getTile(desiredPosition).actorId !== null
           ) {
             user.write(chalk.red('You cannot move there!'))
-            desiredPosition = user.position
+            desiredPosition = null
           }
+          break
+        default:
+          user.write(chalk.red('Invalid direction'))
+          desiredPosition = null
           break
       }
 
-      const check1 = Database.map.setActorId(user.position, null)
-      const check2 = Database.map.setActorId(desiredPosition, user.id)
-      require('./log.js')('MOVEMENT FROM ' + JSON.stringify(user.position) + ' TO ' + JSON.stringify(desiredPosition) + ' CHECKS ' + check1 + ' ' + check2)
-      
-      if (check1 && check2) {
-        user.position = desiredPosition
+      if (!desiredPosition) {
+        break
       }
-      user.write(chalk.green('You moved to ' + user.position))
 
+      Database.map.setActorId(user.position, null)
+      Database.map.setActorId(desiredPosition, user.id)
+
+      user.position = desiredPosition
+
+      user.write(chalk.green(`You moved to ${JSON.stringify(desiredPosition)}`))
       break
 
     case 'coordinates':
@@ -95,19 +102,13 @@ function handleUserInput(user, userInput) {
       break
 
     case 'map':
-      let map = ''
-      for (let y = 0; y < Database.map.tiles[0].length; y++) {
-        for (let x = 0; x < Database.map.tiles.length; x++) {
-          const tile = Database.map.getTile({ x, y, z: 0 })
-          if (tile.actorId === null) {
-            map += chalk.green(tile.type[0])
-          } else {
-            map += chalk.red('X')
-          }
-        }
-        map += '\n'
+      if (!user.hasSpawned()) {
+        user.write(chalk.red('You must spawn first'))
+        break
       }
-      user.writeWithPrompt(map)
+
+      const map = Database.map.getDisplayInCoordinates(user.position)
+      user.write(map)
       break
 
     case 'users':

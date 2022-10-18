@@ -1,3 +1,5 @@
+const chalk = require('chalk')
+
 class Map {
   tiles = []
 
@@ -24,7 +26,7 @@ class Map {
       this.tiles[x][y].actorId = actorId
       return true
     }
-    
+
     return null
   }
 
@@ -39,6 +41,37 @@ class Map {
     }
 
     this.setActorId(user.position, user.id)
+  }
+
+  writeToFile(path = 'mapDump.json') {
+    const json = JSON.stringify(this)
+    fs.writeFile(path, json, 'utf8', function () {
+      console.log(`Map written to file ${path}`)
+    })
+  }
+
+  getDisplayInCoordinates(coordinates) {
+    let display = ''
+
+    for (let y = coordinates.y - 5; y < coordinates.y + 5; y++) {
+      for (let x = coordinates.x - 5; x < coordinates.x + 5; x++) {
+        const tile = this.getTile({ x, y, z: 0 })
+
+        if (tile == null) {
+          display += ' '
+          continue
+        }
+
+        if (tile.actorId === null) {
+          display += chalk.green(tile.type[0])
+        } else {
+          display += chalk.blue('X')
+        }
+      }
+      display += '\n'
+    }
+
+    return display
   }
 }
 

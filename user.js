@@ -6,7 +6,7 @@ class User {
   isGuest
   username
   password
-  position = { x: 0, y: 0, z: 0 }
+  position = { x: null, y: null, z: null }
 
   constructor(connection) {
     this.connection = connection
@@ -37,6 +37,10 @@ class User {
 
   write(message) {
     this.connection.write(message)
+  }
+
+  hasSpawned() {
+    return this.position.x !== null && this.position.y !== null
   }
 }
 
